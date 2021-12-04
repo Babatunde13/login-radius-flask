@@ -7,7 +7,6 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret'
 
 from models import Books, User
-from auth_middleware import token_required
 
 @app.route("/")
 def hello():
@@ -93,18 +92,18 @@ def login():
 
 
 @app.route("/users/", methods=["GET"])
-@token_required
-def get_current_user(current_user):
+def get_current_user():
+    current_user = User().get_by_email(request.args.get("email"))
     return jsonify({
         "message": "successfully retrieved user profile",
         "data": current_user
     })
 
 @app.route("/users/", methods=["PUT"])
-@token_required
-def update_user(current_user):
+def update_user():
     try:
         user = request.json
+        current_user = User().get_by_email(request.args.get("email"))
         if user.get("name"):
             user = User().update(current_user["_id"], user["name"])
             return jsonify({
@@ -124,9 +123,9 @@ def update_user(current_user):
         }), 400
 
 @app.route("/users/", methods=["DELETE"])
-@token_required
-def disable_user(current_user):
+def disable_user():
     try:
+        current_user = User().get_by_email(request.args.get("email"))
         User().disable_account(current_user["_id"])
         return jsonify({
             "message": "successfully disabled acount",
@@ -140,8 +139,7 @@ def disable_user(current_user):
         }), 400
 
 @app.route("/books/", methods=["POST"])
-@token_required
-def add_book(current_user):
+def add_book():
     try:
         book = dict(request.form)
         if not book:
@@ -164,6 +162,7 @@ def add_book(current_user):
                 "data": None,
                 "error": is_validated
             }, 400
+        current_user = User().get_by_email(request.args.get("email"))
         book = Books().create(**book, user_id=current_user["_id"])
         if not book:
             return {
@@ -183,9 +182,9 @@ def add_book(current_user):
         }), 500
 
 @app.route("/books/", methods=["GET"])
-@token_required
 def get_books(current_user):
     try:
+        current_user = User().get_by_email(request.args.get("email"))
         books = Books().get_by_user_id(current_user["_id"])
         return jsonify({
             "message": "successfully retrieved all books",
@@ -199,8 +198,7 @@ def get_books(current_user):
         }), 500
 
 @app.route("/books/<book_id>", methods=["GET"])
-@token_required
-def get_book(current_user, book_id):
+def get_book(book_id):
     try:
         book = Books().get_by_id(book_id)
         if not book:
@@ -221,9 +219,9 @@ def get_book(current_user, book_id):
         }), 500
 
 @app.route("/books/<book_id>", methods=["PUT"])
-@token_required
-def update_book(current_user, book_id):
+def update_book(book_id):
     try:
+        current_user = User().get_by_email(request.args.get("email"))
         book = Books().get_by_id(book_id)
         if not book or book["user_id"] != current_user["_id"]:
             return {
@@ -247,9 +245,9 @@ def update_book(current_user, book_id):
         }), 400
 
 @app.route("/books/<book_id>", methods=["DELETE"])
-@token_required
-def delete_book(current_user, book_id):
+def delete_book(book_id):
     try:
+        current_user = User().get_by_email(request.args.get("email"))
         book = Books().get_by_id(book_id)
         if not book or book["user_id"] != current_user["_id"]:
             return {
