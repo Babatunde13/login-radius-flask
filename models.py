@@ -1,9 +1,14 @@
 """Application Models"""
-import bson
+import bson, os
+from dotenv import load_dotenv
 from pymongo import MongoClient
 from werkzeug.security import generate_password_hash, check_password_hash
 
-client = MongoClient("mongodb://localhost:27017/myDatabase")
+load_dotenv()
+
+DATABASE_URL=os.environ.get('DATABASE_URL') or 'mongodb://localhost:27017/myDatabase'
+print(DATABASE_URL)
+client = MongoClient(DATABASE_URL)
 db = client.myDatabase
 
 class Books:
