@@ -69,7 +69,6 @@ def login():
         )
         if user:
             try:
-                # token should expire after 24 hrs
                 user["token"] = jwt.encode(
                     {"user_id": user["_id"]},
                     app.config["SECRET_KEY"],
@@ -162,6 +161,7 @@ def add_book(current_user):
             }, 400
 
         book["image_url"] = request.host_url+"static/books/"+save_pic(request.files["cover_image"])
+        book["user_id"] = current_user["_id"]
         is_validated = validate_book(**book)
         if is_validated is not True:
             return {
@@ -169,7 +169,7 @@ def add_book(current_user):
                 "data": None,
                 "error": is_validated
             }, 400
-        book = Books().create(**book, user_id=current_user["_id"])
+        book = Books().create(**book)
         if not book:
             return {
                 "message": "The book has been created by user",
